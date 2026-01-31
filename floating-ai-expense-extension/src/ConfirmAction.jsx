@@ -99,7 +99,7 @@ export default function ConfirmAction({ tool, args, onCancel, onSuccess }) {
               Executing...
             </>
           ) : (
-            '✓ Confirm & Execute'
+            'Execute'
           )}
         </button>
       </div>
