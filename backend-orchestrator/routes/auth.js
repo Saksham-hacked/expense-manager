@@ -114,4 +114,35 @@ router.get('/session', authenticate, (req, res) => {
   });
 });
 
+// Example: routes/auth.js or similar
+router.post('/google/exchange', async (req, res) => {
+  const { code, redirectUri } = req.body;
+  
+  try {
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        code: code,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,  // ✅ Safe on server
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+      }),
+    });
+
+    const tokens = await tokenResponse.json();
+    
+    if (!tokenResponse.ok) {
+      return res.status(400).json({ error: tokens.error_description || 'Token exchange failed' });
+    }
+
+    res.json({ access_token: tokens.access_token });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

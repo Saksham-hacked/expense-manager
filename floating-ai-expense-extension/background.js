@@ -1,82 +1,27 @@
-// chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-//   if (msg.type !== "GOOGLE_SIGN_IN") return;
-
-//   chrome.identity.getAuthToken({ interactive: true }, async accessToken => {
-//     if (chrome.runtime.lastError) {
-//       sendResponse({ error: chrome.runtime.lastError.message });
-//       return;
-//     }
-
-//     try {
-//       // Convert access token → ID token
-//       const res = await fetch(
-//         "https://oauth2.googleapis.com/tokeninfo?access_token=" + accessToken
-//       );
-
-//       const tokenInfo = await res.json();
-
-//       if (!tokenInfo.sub) {
-//         throw new Error("Invalid Google token");
-//       }
-
-//       sendResponse(await backendRes.json());
-//  // or tokenInfo
-//     } catch (e) {
-//       sendResponse({ error: e.message });
-//     }
-//   });
-
-//   return true; // REQUIRED (async)
-// });
 /**
- * Background Service Worker (MV3)
+ * Background Service Worker (MV3) - BRAVE BROWSER COMPATIBLE
  *
- * RESPONSIBILITIES:
- * - Google authentication
- * - All backend communication
- * - Session management
- *
- * NOTE:
- * - Content scripts NEVER call backend directly
- * - All fetch() happens here
+ * CRITICAL CHANGES FOR BRAVE COMPATIBILITY:
+ * - Removed chrome.identity.getAuthToken() (Chrome-only)
+ * - Implemented chrome.identity.launchWebAuthFlow() (Works in Chrome, Brave, Edge)
+ * - Uses standard OAuth 2.0 authorization code flow
+ * - No longer relies on manifest's oauth2 block
  */
 
 const API_BASE_URL = "http://localhost:3000";
 
-/**
- * Helper: get session token
- */
-// function getSessionToken() {
-//   return new Promise((resolve) => {
-//     chrome.storage.local.get("sessionToken", (res) => {
-//       resolve(res.sessionToken || null);
-//     });
-//   });
-// }
-
-// /**
-//  * Helper: save session
-//  */
-// async function saveSession(session) {
-//   await chrome.storage.local.set({
-//     sessionToken: session.sessionToken,
-//     user: session.user,
-//   });
-// }
-
-// /**
-//  * Helper: clear session
-//  */
-// async function clearSession() {
-//   await chrome.storage.local.remove(["sessionToken", "user"]);
-// }
+// OAuth Configuration
+const OAUTH_CONFIG = {
+  clientId: "411523715379-irras3nean8r3isf8nvcnngd77ab2jod.apps.googleusercontent.com",
+  redirectUri: `https://${chrome.runtime.id}.chromiumapp.org/`,
+  authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+  tokenUrl: "https://oauth2.googleapis.com/token",
+  scope: "openid email profile"
+};
 
 /**
- * Helper: backend request
+ * Helper: get JWT
  */
-
-
-
 function getJWT() {
   return new Promise((resolve) => {
     chrome.storage.local.get("jwt", (res) => {
@@ -85,6 +30,9 @@ function getJWT() {
   });
 }
 
+/**
+ * Helper: save JWT
+ */
 async function saveJWT(token, user) {
   await chrome.storage.local.set({
     jwt: token,
@@ -92,43 +40,16 @@ async function saveJWT(token, user) {
   });
 }
 
+/**
+ * Helper: clear JWT
+ */
 async function clearJWT() {
   await chrome.storage.local.remove(["jwt", "user"]);
 }
 
-// async function backendRequest(endpoint, options = {}) {
-//   const token = await getSessionToken();
-// //   if (token) {
-// //   headers.Authorization = `Bearer ${token}`;
-// // }
-
-
-//   const headers = {
-//     "Content-Type": "application/json",
-//     ...(options.headers || {}),
-//   };
-
-//   if (token) {
-//     headers.Authorization = `Bearer ${token}`;
-//   }
-
-//   const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-//     ...options,
-//     headers,
-//   });
-
-//   if (res.status === 401) {
-//     await clearSession();
-//     throw new Error("Session expired. Please sign in again.");
-//   }
-
-//   if (!res.ok) {
-//     const text = await res.text();
-//     throw new Error(text || `API error ${res.status}`);
-//   }
-
-//   return res.json();
-// }
+/**
+ * Helper: backend request
+ */
 async function backendRequest(endpoint, options = {}) {
   const token = await getJWT();
 
@@ -159,6 +80,100 @@ async function backendRequest(endpoint, options = {}) {
 }
 
 /**
+ * NEW: Browser-agnostic OAuth flow using launchWebAuthFlow
+ * Works in Chrome, Brave, Edge, and other Chromium browsers
+ */
+async function performOAuthFlow() {
+  // Step 1: Build authorization URL
+  const authUrl = new URL(OAUTH_CONFIG.authUrl);
+  authUrl.searchParams.append("client_id", OAUTH_CONFIG.clientId);
+  authUrl.searchParams.append("redirect_uri", OAUTH_CONFIG.redirectUri);
+  authUrl.searchParams.append("response_type", "code");
+  authUrl.searchParams.append("scope", OAUTH_CONFIG.scope);
+  authUrl.searchParams.append("access_type", "online");
+  authUrl.searchParams.append("prompt", "consent");
+
+  console.log("[OAuth] Launching web auth flow...");
+
+  // Step 2: Launch OAuth flow (opens Google's consent screen)
+  const redirectUrl = await new Promise((resolve, reject) => {
+    chrome.identity.launchWebAuthFlow(
+      {
+        url: authUrl.toString(),
+        interactive: true,
+      },
+      (responseUrl) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else {
+          resolve(responseUrl);
+        }
+      }
+    );
+  });
+
+  console.log("[OAuth] Received redirect:", redirectUrl);
+
+  // Step 3: Extract authorization code from redirect URL
+  const urlParams = new URL(redirectUrl).searchParams;
+  const authCode = urlParams.get("code");
+
+  if (!authCode) {
+    throw new Error("No authorization code received");
+  }
+
+  console.log("[OAuth] Got authorization code");
+
+  // Step 4: Exchange code for access token
+  // const tokenResponse = await fetch(OAUTH_CONFIG.tokenUrl, {
+  //   method: "POST",
+  //   headers: {
+  //     "Content-Type": "application/x-www-form-urlencoded",
+  //   },
+  //   body: new URLSearchParams({
+  //     code: authCode,
+  //     client_id: OAUTH_CONFIG.clientId,
+  //     client_secret: process.env.GOOGLE_CLIENT_SECRET,
+  //     redirect_uri: OAUTH_CONFIG.redirectUri,
+  //     grant_type: "authorization_code",
+  //   }),
+  // });
+
+  // if (!tokenResponse.ok) {
+  //   const error = await tokenResponse.text();
+  //   throw new Error(`Token exchange failed: ${error}`);
+  // }
+
+  // const tokens = await tokenResponse.json();
+  // console.log("[OAuth] Got access token");
+
+  // return tokens.access_token;
+  console.log("[OAuth] Got authorization code");
+
+// Step 4: Send auth code to backend for secure token exchange
+const tokenResponse = await fetch(`${API_BASE_URL}/auth/google/exchange`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    code: authCode,
+    redirectUri: OAUTH_CONFIG.redirectUri,
+  }),
+});
+
+if (!tokenResponse.ok) {
+  const error = await tokenResponse.text();
+  throw new Error(`Token exchange failed: ${error}`);
+}
+
+const result = await tokenResponse.json();
+console.log("[OAuth] Got access token from backend");
+
+return result.access_token;
+}
+
+/**
  * MAIN MESSAGE HANDLER
  */
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -167,70 +182,39 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       switch (msg.type) {
         /**
          * =========================
-         * AUTH
+         * AUTH - BRAVE COMPATIBLE
          * =========================
          */
-        // case "GOOGLE_SIGN_IN": {
-        //   const accessToken = await new Promise((resolve, reject) => {
-        //     chrome.identity.getAuthToken(
-        //       { interactive: true },
-        //       (token) => {
-        //         if (chrome.runtime.lastError) {
-        //           reject(new Error(chrome.runtime.lastError.message));
-        //         } else {
-        //           resolve(token);
-        //         }
-        //       }
-        //     );
-        //   });
+        case "GOOGLE_SIGN_IN": {
+          console.log("[AUTH] Starting browser-agnostic OAuth flow...");
 
-        //   // Validate token
-        //   const tokenInfoRes = await fetch(
-        //     "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=" +
-        //       accessToken
-        //   );
-        //   const tokenInfo = await tokenInfoRes.json();
+          // Use launchWebAuthFlow instead of getAuthToken
+          const accessToken = await performOAuthFlow();
 
-        //   if (!tokenInfo.sub) {
-        //     throw new Error("Invalid Google token");
-        //   }
+          console.log("[AUTH] Authenticating with backend...");
 
-        //   // Authenticate with backend
-        //   const session = await backendRequest("/auth/google", {
-        //     method: "POST",
-        //     body: JSON.stringify({ idToken: accessToken }),
-        //   });
+          // Authenticate with backend
+          const result = await backendRequest("/auth/google", {
+            method: "POST",
+            body: JSON.stringify({ accessToken }),
+          });
 
-        //   await saveSession(session);
-        //   sendResponse(session);
-        //   break;
-        // }
-        case "Debug_Log": {
-          console.log("debug_log",msg.payload);
+          await saveJWT(result.token, result.user);
+          console.log("[AUTH] Sign-in successful!");
+
+          sendResponse(result);
           break;
         }
-        case "GOOGLE_SIGN_IN": {
-  const accessToken = await new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken({ interactive: true }, (token) => {
-      if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message));
-      } else {
-        resolve(token);
-      }
-    });
-  });
 
-  // Authenticate with backend
-  const result = await backendRequest("/auth/google", {
-    method: "POST",
-    body: JSON.stringify({ accessToken }),
-  });
-
-  await saveJWT(result.token, result.user);
-  sendResponse(result);
-  break;
-}
-
+        /**
+         * =========================
+         * DEBUG
+         * =========================
+         */
+        case "Debug_Log": {
+          console.log("debug_log", msg.payload);
+          break;
+        }
 
         /**
          * =========================
@@ -238,45 +222,42 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
          * =========================
          */
         case "LLM_PARSE_INTENT": {
-  const rawText =
-    typeof msg.payload?.text === "string"
-      ? msg.payload.text
-      : typeof msg.payload?.input === "string"
-      ? msg.payload.input
-      : "";
+          const rawText =
+            typeof msg.payload?.text === "string"
+              ? msg.payload.text
+              : typeof msg.payload?.input === "string"
+              ? msg.payload.input
+              : "";
 
-  const text = rawText.trim();
+          const text = rawText.trim();
 
-  console.log("[BG] INTENT TEXT:", JSON.stringify(text));
+          console.log("[BG] INTENT TEXT:", JSON.stringify(text));
 
-  if (!text) {
-    sendResponse({ error: "Empty intent text (background guard)" });
-    break;
-  }
+          if (!text) {
+            sendResponse({ error: "Empty intent text (background guard)" });
+            break;
+          }
 
-  const data = await backendRequest("/llm/intent", {
-    method: "POST",
-    body: JSON.stringify({ text }),
-  });
+          const data = await backendRequest("/llm/intent", {
+            method: "POST",
+            body: JSON.stringify({ text }),
+          });
 
-  sendResponse(data);
-  break;
-}
-
-
-
+          sendResponse(data);
+          break;
+        }
 
         case "LLM_EXECUTE_ACTION": {
-  const data = await backendRequest("/execute", {
-    method: "POST",
-    body: JSON.stringify({
-      tool: msg.payload.tool,
-      arguments: msg.payload.arguments
-    }),
-  });
-  sendResponse(data);
-  break;
-}
+          const data = await backendRequest("/execute", {
+            method: "POST",
+            body: JSON.stringify({
+              tool: msg.payload.tool,
+              arguments: msg.payload.arguments,
+            }),
+          });
+          sendResponse(data);
+          break;
+        }
 
         /**
          * =========================
@@ -315,6 +296,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           sendResponse({ error: "Unknown message type" });
       }
     } catch (err) {
+      console.error("[Background Error]:", err);
       sendResponse({ error: err.message });
     }
   })();

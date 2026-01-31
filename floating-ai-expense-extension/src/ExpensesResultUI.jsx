@@ -26,9 +26,41 @@ export default function ResultViewer({ result, tool }) {
   payload: result,
 });
 
+function resolvePayload(tool, result) {
+  const sc = result?.result?.structuredContent;
+
+  if (!sc) return null;
+
+  switch (tool) {
+    case "monthly_report":
+      return sc; // full object
+
+    case "list_expenses":
+    case "summarize_expenses":
+      return sc.result; // array
+
+    default:
+      return sc.result ?? sc;
+  }
+}
 
 
-  if (!result || !result.result.structuredContent.result) {
+
+
+  // if (!result || !result.result.structuredContent.result) {
+  //   return (
+  //     <p className="text-sm text-neutral-400">
+  //       No data returned
+  //       {tool && ": " + result}
+  //     </p>
+  //   );
+  // }
+
+ const payload = resolvePayload(tool, result);
+
+console.log("Resolved payload:", payload);
+
+  if (!payload) {
     return (
       <p className="text-sm text-neutral-400">
         No data returned
@@ -36,8 +68,6 @@ export default function ResultViewer({ result, tool }) {
       </p>
     );
   }
-
-  const payload = result.result.structuredContent.result;
 
   switch (tool) {
     case "list_expenses":
@@ -47,6 +77,7 @@ export default function ResultViewer({ result, tool }) {
       return <CategorySummary data={payload} />;
 
     case "monthly_report":
+      console.log("Monthly report payload:", payload);
       return <MonthlyReport report={payload} />;
 
     default:
@@ -132,6 +163,7 @@ function CategorySummary({ data }) {
 /* ===================== MONTHLY REPORT ===================== */
 
 function MonthlyReport({ report }) {
+  console.log("MonthlyReport received report:", report);
   if (
     !report ||
     !Array.isArray(report.category_breakdown)

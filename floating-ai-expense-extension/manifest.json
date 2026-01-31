@@ -1,17 +1,19 @@
 {
   "manifest_version": 3,
   "name": "Floating AI Expense Assistant",
-  "version": "0.1.0",
-  "description": "AI-powered expense tracker with floating UI",
+  "version": "0.1.1",
+  "description": "AI-powered expense tracker with floating UI - Brave Browser Compatible",
   "permissions": [
     "storage",
     "identity"
   ],
-   "background": {
+  "background": {
     "service_worker": "background.js"
   },
   "host_permissions": [
-    "http://localhost:3000/*"
+    "http://localhost:3000/*",
+    "https://accounts.google.com/*",
+    "https://oauth2.googleapis.com/*"
   ],
   "content_scripts": [
     {
@@ -26,9 +28,5 @@
       "resources": ["public/styles.css"],
       "matches": ["<all_urls>"]
     }
-  ],
-  "oauth2": {
-    "client_id": "411523715379-vl29oesla4am823194ss37sg11pfl051.apps.googleusercontent.com",
-    "scopes": ["openid", "email", "profile"]
-  }
+  ]
 }
