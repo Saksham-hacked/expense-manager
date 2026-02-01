@@ -238,6 +238,242 @@ app.get('/privacy', (req, res) => {
 </html>
   `);
 });
+app.get("/home", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Expensy – AI Expense Manager</title>
+
+        <style>
+          body {
+            margin: 0;
+            font-family: Inter, Arial, sans-serif;
+            background: linear-gradient(135deg, #0ea5a4, #2563eb);
+            color: #ffffff;
+          }
+
+          .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 80px 24px;
+          }
+
+          .hero {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 48px;
+            align-items: center;
+          }
+
+          h1 {
+            font-size: 64px;
+            margin-bottom: 16px;
+          }
+
+          p {
+            font-size: 20px;
+            line-height: 1.6;
+            opacity: 0.95;
+          }
+
+          .tagline {
+            font-size: 24px;
+            margin-bottom: 32px;
+          }
+
+          .cta {
+            display: inline-block;
+            padding: 14px 28px;
+            background: #ffffff;
+            color: #2563eb;
+            border-radius: 999px;
+            font-weight: 600;
+            text-decoration: none;
+            margin-top: 24px;
+          }
+
+          .card {
+            background: rgba(255, 255, 255, 0.12);
+            padding: 28px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+          }
+
+          footer {
+            margin-top: 80px;
+            opacity: 0.8;
+            font-size: 14px;
+          }
+
+          @media (max-width: 900px) {
+            .hero {
+              grid-template-columns: 1fr;
+              text-align: center;
+            }
+
+            h1 {
+              font-size: 48px;
+            }
+          }
+        </style>
+      </head>
+
+      <body>
+        <div class="container">
+          <section class="hero">
+            <div>
+              <h1>Expensy</h1>
+              <div class="tagline">Your AI-powered expense assistant</div>
+
+              <p>
+                Expensy is a smart Chrome extension that lets you track expenses
+                using natural language. Just tell it what you spent — Expensy
+                takes care of the rest.
+              </p>
+
+              <a class="cta" href="https://chrome.google.com/webstore" target="_blank">
+                Get the Chrome Extension
+              </a>
+            </div>
+
+            <div class="card">
+              <p><strong>Why Expensy?</strong></p>
+              <ul>
+                <li>🤖 AI understands natural language</li>
+                <li>⚡ Instant expense tracking</li>
+                <li>🔒 Secure Google Sign-In</li>
+                <li>📊 Smart insights & categorization</li>
+                <li>🧠 Human-in-the-loop AI</li>
+              </ul>
+            </div>
+          </section>
+
+          <footer>
+            © ${new Date().getFullYear()} Expensy · Privacy-first · Secure by design
+          </footer>
+        </div>
+      </body>
+    </html>
+  `);
+});
+
+app.get("/support", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Expensy Support</title>
+
+        <style>
+          body {
+            margin: 0;
+            font-family: Inter, Arial, sans-serif;
+            background: linear-gradient(135deg, #0ea5a4, #2563eb);
+            color: #ffffff;
+          }
+
+          .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 80px 24px;
+          }
+
+          h1 {
+            font-size: 56px;
+            margin-bottom: 16px;
+          }
+
+          p {
+            font-size: 18px;
+            line-height: 1.6;
+            opacity: 0.95;
+          }
+
+          .card {
+            margin-top: 40px;
+            background: rgba(255, 255, 255, 0.12);
+            padding: 32px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+          }
+
+          .email {
+            font-size: 20px;
+            font-weight: 600;
+            margin-top: 12px;
+            word-break: break-all;
+          }
+
+          a {
+            color: #ffffff;
+          }
+
+          footer {
+            margin-top: 80px;
+            opacity: 0.8;
+            font-size: 14px;
+          }
+
+          @media (max-width: 768px) {
+            h1 {
+              font-size: 44px;
+            }
+          }
+        </style>
+      </head>
+
+      <body>
+        <div class="container">
+          <h1>Support</h1>
+
+          <p>
+            Need help with Expensy? We’re here to help you get the most out of your
+            AI-powered expense assistant.
+          </p>
+
+          <div class="card">
+            <p><strong>Contact Us</strong></p>
+            <p>
+              If you have questions, feedback, or need assistance, reach out to us
+              anytime:
+            </p>
+
+            <div class="email">
+              📧 kaushishsaksham@gmail.com.com
+            </div>
+
+            <p style="margin-top: 24px;">
+              We usually respond within 24–48 hours.
+            </p>
+          </div>
+
+          <div class="card">
+            <p><strong>Common Questions</strong></p>
+            <ul>
+              <li>How do I add an expense?</li>
+              <li>Is my data secure?</li>
+              <li>How does AI confirmation work?</li>
+              <li>Can I delete my data?</li>
+            </ul>
+
+            <p style="margin-top: 16px;">
+              If your question isn’t listed above, just email us — we’re happy to help.
+            </p>
+          </div>
+
+          <footer>
+            © ${new Date().getFullYear()} Expensy · Privacy-first · Built for trust
+          </footer>
+        </div>
+      </body>
+    </html>
+  `);
+});
 
 
 // ============================================================================
