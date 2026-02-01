@@ -1,20 +1,31 @@
 {
   "manifest_version": 3,
-  "name": "Floating AI Expense Assistant",
-  "version": "0.1.1",
-  "description": "AI-powered expense tracker with floating UI - Brave Browser Compatible",
+  "name": "Expense Manager - AI Assistant",
+  "version": "1.0.0",
+  "description": "AI-powered expense tracking with natural language. Manage your expenses effortlessly.",
+  
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  
   "permissions": [
     "storage",
     "identity"
   ],
-  "background": {
-    "service_worker": "background.js"
-  },
+  
   "host_permissions": [
-    "http://localhost:3000/*",
+    "http://localhost/7895",
+    "https://expense-manager-61j9.onrender.com/*",
     "https://accounts.google.com/*",
     "https://oauth2.googleapis.com/*"
   ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
@@ -23,10 +34,15 @@
       "run_at": "document_idle"
     }
   ],
+  
   "web_accessible_resources": [
     {
-      "resources": ["public/styles.css"],
+      "resources": ["public/styles.css", "icons/*.png"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
 }

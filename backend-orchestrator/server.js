@@ -147,6 +147,98 @@ app.get('/health', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/llm', llmRoutes);
 app.use('/execute', executeRoutes);
+// ============================================================================
+// PRIVACY POLICY
+// ============================================================================
+
+app.get('/privacy', (req, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Privacy Policy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 40px;
+      max-width: 900px;
+      margin: auto;
+      line-height: 1.6;
+    }
+    h1, h2 {
+      color: #38bdf8;
+    }
+    a {
+      color: #38bdf8;
+    }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+
+  <p><strong>Last updated:</strong> ${new Date().toISOString().split('T')[0]}</p>
+
+  <h2>Overview</h2>
+  <p>
+    This application is an AI-powered expense management system delivered via a Chrome Extension
+    and a backend orchestrator. We prioritize user privacy and data security.
+  </p>
+
+  <h2>Data We Collect</h2>
+  <ul>
+    <li>Google account identifier (via Google OAuth)</li>
+    <li>Email address (for authentication only)</li>
+    <li>User-provided API keys (BYOK), stored encrypted</li>
+  </ul>
+
+  <h2>Data We Do NOT Collect</h2>
+  <ul>
+    <li>Passwords</li>
+    <li>Payment or banking details</li>
+    <li>Expense data on this server</li>
+    <li>LLM prompts or responses beyond execution</li>
+  </ul>
+
+  <h2>How Data Is Used</h2>
+  <p>
+    Data is used solely to authenticate users, securely execute requested actions,
+    and provide AI-powered expense tooling. No data is sold, shared, or used for advertising.
+  </p>
+
+  <h2>Security</h2>
+  <ul>
+    <li>JWT-based stateless authentication</li>
+    <li>AES-256-GCM encryption for stored API keys</li>
+    <li>Strict user isolation via user_id injection</li>
+  </ul>
+
+  <h2>Third-Party Services</h2>
+  <ul>
+    <li>Google OAuth for authentication</li>
+    <li>Optional LLM providers via user-supplied API keys</li>
+  </ul>
+
+  <h2>User Control</h2>
+  <p>
+    Users may delete their stored API keys at any time.
+    No data is retained beyond what is required for functionality.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    For privacy concerns, contact kaushishsaksham@gmail.com.
+  </p>
+
+</body>
+</html>
+  `);
+});
+
 
 // ============================================================================
 // ERROR HANDLING

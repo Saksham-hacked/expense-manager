@@ -8,7 +8,7 @@
  * - No longer relies on manifest's oauth2 block
  */
 
-const API_BASE_URL = "http://localhost:3000";
+const API_BASE_URL = "https://expense-manager-61j9.onrender.com";
 
 // OAuth Configuration
 const OAUTH_CONFIG = {
