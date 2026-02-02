@@ -1,8 +1,3 @@
-Perfect — below is **pure Markdown** (no explanations, no commentary).
-You can **copy–paste this directly into `README.md`**.
-
----
-
 ````md
 # 💰 Floating AI Expense Assistant
 
@@ -342,3 +337,4 @@ sequenceDiagram
 * OpenAPI generation
 * CI/CD pipeline
 
+```
