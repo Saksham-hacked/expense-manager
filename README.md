@@ -1,183 +1,163 @@
+Perfect — below is **pure Markdown** (no explanations, no commentary).
+You can **copy–paste this directly into `README.md`**.
+
+---
+
+````md
 # 💰 Floating AI Expense Assistant
 
-**A human-in-the-loop, AI-powered expense management system using a Chrome Extension + MCP-based Backend Orchestrator**
+**A human-in-the-loop, AI-powered expense management system built using a Chrome Extension + MCP-based Backend Orchestrator**
 
-> Resume-grade, production-inspired architecture demonstrating modern frontend, backend, AI orchestration, and security best practices.
+> A production-inspired system demonstrating **correct AI boundaries**, **MCP compliance**, and **security-first orchestration** — not a toy chatbot.
 
 ---
 
 ## 📌 High-Level Overview
 
-This project consists of **two major components**:
+This project is composed of **three explicitly separated layers**, each with a single responsibility:
 
-1. **Floating Chrome Extension (Thin Client)**
-2. **AI Backend Orchestrator (JWT-based, MCP-aware)**
+1. **Chrome Extension (Thin Client UI)**
+2. **AI Backend Orchestrator (Decision & Security Layer)**
+3. **Expense MCP Server (Pure Tool Executor)**
 
-The system allows users to manage expenses using **natural language**, while ensuring:
+The system enables users to manage expenses via **natural language**, while guaranteeing:
 
-* Explicit user confirmation before execution
-* Strong security boundaries
-* Clean separation of concerns
-* MCP philosophy compliance
+- Explicit user confirmation before execution
+- Deterministic tool behavior
+- Strict security boundaries
+- Correct MCP philosophy adherence
 
 ---
 
-## 🧭 System Architecture (Bird’s Eye View)
+## 🧭 System Architecture (Bird’s-Eye View)
 
-```
-┌────────────────────────────┐
-│  Chrome Extension (UI)     │
-│────────────────────────────│
-│ • Floating Widget          │
-│ • Google Sign-In           │
-│ • Confirmation UI          │
-│ • BYOK Settings            │
-│ • NO LLM LOGIC             │
-└──────────────┬─────────────┘
-               │ JWT
-               ▼
-┌──────────────────────────────────────────────┐
-│        AI Backend Orchestrator (Node.js)     │
-│──────────────────────────────────────────────│
-│ • Google OAuth Verification                  │
-│ • JWT Authentication                         │
-│ • Intent → Tool Translation (LLM)            │
-│ • Tool Validation & Safety Checks            │
-│ • Encrypted BYOK Storage (Supabase)          │
-│ • MCP Client                                 │
-└──────────────┬───────────────────────────────┘
-               │ MCP Tool Call + user_id
-               ▼
-┌──────────────────────────────────────────────┐
-│          Expense MCP Server (FastMCP)        │
-│──────────────────────────────────────────────│
-│ • add_expense                                │
-│ • get_expenses                               │
-│ • update_expense                             │
-│ • delete_expense                             │
-│ • stats & search                             │
-│ • PostgreSQL                                 │
-│ • NO AUTH / NO LLM                           │
-└──────────────────────────────────────────────┘
-```
+```mermaid
+flowchart TB
+    U[User]
+    CE[Chrome Extension<br/>Thin Client UI]
+    BO[Backend Orchestrator<br/>AI Decision Layer]
+    LLM[LLM<br/>Intent Translation Only]
+    MCP[Expense MCP Server<br/>Pure Tools]
+    DB[(PostgreSQL)]
+
+    U --> CE
+    CE -->|JWT| BO
+    BO --> LLM
+    BO --> MCP
+    MCP --> DB
+````
 
 ---
 
 ## 🎯 Design Philosophy
 
-### Human-in-the-Loop AI
+### Human-in-the-Loop AI (Non-Autonomous)
 
-1. User writes natural language command
-2. Backend LLM **only translates** intent
-3. User explicitly confirms action
-4. Backend executes via MCP
+1. User enters a natural-language command
+2. Backend LLM **only translates intent**
+3. User explicitly confirms the action
+4. Backend executes **exactly one MCP tool**
 
-> ❗ The AI never auto-executes actions
+> ❗ The AI never auto-executes
+> ❗ MCP servers never contain intelligence
 
 ---
 
 ## 🧩 Component Breakdown
 
+---
+
 ## 1️⃣ Chrome Extension — Thin Client
 
 ### Responsibilities
 
-✅ UI rendering (floating widget)
-✅ Google Sign-In (Chrome Identity API)
-✅ JWT storage (chrome.storage)
-✅ Confirmation before execution
-✅ BYOK management UI
+* Floating UI rendering
+* Google Sign-In (Chrome Identity API)
+* JWT storage (`chrome.storage.local`)
+* Confirmation UI
+* BYOK management interface
 
 ### Explicitly NOT Responsible For
 
-❌ Calling LLM APIs
-❌ Parsing intent
-❌ Choosing tools
-❌ Storing API keys
-❌ Executing actions
+* Calling LLM APIs
+* Parsing intent
+* Selecting tools
+* Executing actions
+* Storing expenses or secrets
 
 ---
 
-### 📁 Extension Project Structure
+### 📁 Extension Structure
 
 ```
 floating-ai-expense-extension/
 │
-├── manifest.json              # MV3 configuration
-├── package.json               # Dependencies
-├── webpack.config.js          # Build config
-│
+├── manifest.json          # MV3 configuration
+├── webpack.config.js
 ├── public/
-│   └── styles.css             # Global styles
+│   └── styles.css
 │
 ├── src/
-│   ├── contentScript.jsx      # Entry point
-│   ├── FloatingWidget.jsx     # Main UI shell
-│   ├── Auth.jsx               # Google Sign-In
-│   ├── Settings.jsx           # BYOK & profile
-│   ├── ConfirmAction.jsx      # Confirmation UI
-│   └── api.js                 # Backend client
+│   ├── contentScript.jsx
+│   ├── FloatingWidget.jsx
+│   ├── Auth.jsx
+│   ├── Settings.jsx
+│   ├── ConfirmAction.jsx
+│   └── api.js
 │
 └── dist/
-    └── contentScript.js       # Compiled bundle
+    └── contentScript.js
 ```
 
 ---
 
 ### 🔐 Authentication Flow (Chrome Extension)
 
-```
-User clicks “Sign in with Google”
-        ↓
-Chrome Identity API returns ID Token
-        ↓
-POST /auth/google
-        ↓
-Backend verifies with Google
-        ↓
-Backend issues JWT
-        ↓
-JWT stored in chrome.storage.local
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant CE as Chrome Extension
+    participant G as Google OAuth
+    participant BO as Backend
+
+    U->>CE: Click "Sign in with Google"
+    CE->>G: Request ID Token
+    G-->>CE: ID Token
+    CE->>BO: POST /auth/google
+    BO-->>CE: Signed JWT
 ```
 
 ---
 
 ## 2️⃣ Backend Orchestrator — AI Decision Layer
 
-### What This Backend Is
+### What This Backend IS
 
-✔ AI-powered orchestration layer
-✔ Security boundary
-✔ Tool execution gate
-✔ Multi-user isolation enforcer
+* AI intent translation layer
+* Security boundary
+* Tool execution gatekeeper
+* Multi-tenant isolation enforcer
 
-### What This Backend Is NOT
+### What This Backend IS NOT
 
-❌ Traditional CRUD API
-❌ Chatbot
-❌ Expense database
-❌ MCP server
+* Expense database
+* MCP server
+* Autonomous agent
+* Chatbot with side effects
 
 ---
 
-## 🔑 Authentication Model (UPDATED)
-
-### ✅ JWT-Based Authentication (No Sessions)
-
-This system **uses stateless JWT authentication**, not server-side sessions.
-
-### Flow
+### 🔑 Authentication Model (JWT-Based)
 
 ```
-1. Client sends Google ID Token
+1. Extension sends Google ID Token
 2. Backend verifies token with Google
 3. Backend creates / fetches user
-4. Backend signs JWT (user_id, email)
-5. Client stores JWT
-6. JWT sent on every request
+4. Backend issues signed JWT
+5. JWT attached to every request
 ```
 
-### JWT Payload Example
+#### JWT Payload Example
 
 ```json
 {
@@ -190,7 +170,7 @@ This system **uses stateless JWT authentication**, not server-side sessions.
 
 ---
 
-## 🧠 Why LLM Lives in Backend (NOT MCP)
+## 🧠 Why the LLM Lives in the Backend (NOT MCP)
 
 ### ✅ Correct Architecture
 
@@ -198,209 +178,129 @@ This system **uses stateless JWT authentication**, not server-side sessions.
 User → Backend (LLM) → Structured JSON → MCP Tool
 ```
 
-### ❌ Wrong Architecture
+### ❌ Incorrect Architecture
 
 ```
 User → MCP Server with LLM + Logic
 ```
 
-### Why This Matters
+### Why This Separation Matters
 
-* MCP servers remain reusable
-* Backend controls security
-* LLM is sandboxed
+* MCP servers stay reusable
 * Tool execution is deterministic
+* LLM output is sandboxed & validated
+* Security remains centralized
 
 ---
 
-## 🔐 Security Model
+## 🔐 Security Model (Defense-in-Depth)
 
-### 🔒 Layers of Security
-
-1. **Google OAuth** — Identity
-2. **JWT** — Stateless auth
-3. **AES-256-GCM Encryption** — BYOK
-4. **Tool Allow-List** — Execution safety
-5. **user_id Injection** — Data isolation
+1. Google OAuth — identity verification
+2. JWT — stateless authentication
+3. AES-256-GCM — BYOK encryption
+4. Tool allow-list — execution safety
+5. `user_id` injection — data isolation
 
 ---
 
 ## 🔑 BYOK (Bring Your Own Key)
 
-Users may optionally provide their own LLM API keys.
+Users may optionally provide their own LLM API key.
 
-### Key Properties
+**Guarantees**
 
-✅ Encrypted before storage
-✅ Stored in Supabase only
-✅ Decrypted in memory
-✅ Never logged
-
----
-
-## 🗄️ Supabase Usage
-
-### What Supabase Stores
-
-```sql
-users
-user_llm_keys
-```
-
-### What It NEVER Stores
-
-❌ Expenses
-❌ Tool results
-❌ Plaintext secrets
+* Encrypted before storage
+* Stored only in Supabase
+* Decrypted in memory only
+* Never logged or exposed
 
 ---
 
-## 📡 API Surface
+## 🧩 Expense MCP Server
 
-### Auth
+### Purpose
 
-```
-POST /auth/google
-POST /auth/logout
-GET  /auth/me
-```
+A **pure MCP tool server** responsible only for **expense operations**.
 
-### LLM
+### Hard Rules
 
-```
-POST /llm/intent
-POST /llm/keys
-GET  /llm/keys
-DELETE /llm/keys
-```
-
-### Execution
-
-```
-POST /execute
-POST /execute/combined
-GET  /execute/tools
-GET  /execute/health
-```
+* No authentication
+* No LLM
+* No business decisions
+* Deterministic execution
+* Backend-injected `user_id`
 
 ---
 
-## 🧪 Local Development Flow
+## 🛠️ MCP Tool Definitions
 
-### Extension
+### 1️⃣ add_expense
 
-```bash
-npm install
-npm run dev
-```
+Adds a new expense record.
 
-Load unpacked extension → `chrome://extensions`
+**Arguments**
 
-### Backend
-
-```bash
-npm install
-npm run dev
-```
+* user_id (string, required)
+* date (YYYY-MM-DD)
+* amount (positive number)
+* category (string)
+* merchant (optional)
+* note (optional)
 
 ---
 
-## 🧠 Tool Execution Flow
+### 2️⃣ list_expenses
 
-```
-User Input
-   ↓
-LLM → { tool, arguments }
-   ↓
-Validation Layer
-   ↓
-User Confirmation
-   ↓
-MCP Execution
-```
+Lists expenses within a date range.
+
+**Arguments**
+
+* user_id
+* start_date (YYYY-MM-DD)
+* end_date (YYYY-MM-DD)
 
 ---
 
-## 📊 Why This Is Resume-Grade
+### 3️⃣ summarize_expenses
 
-* Demonstrates MCP architecture
-* Clean AI separation
-* Secure BYOK handling
-* JWT-based auth
-* Chrome Extension MV3
-* Supabase + PostgreSQL
-* Real-world security mindset
+Aggregates expenses by category.
 
----
+**Arguments**
 
-## 🎓 Interview Explanation (Short)
+* user_id
+* start_date
+* end_date
 
-> “This is a human-in-the-loop AI system where the frontend is intentionally dumb, the backend acts as an AI decision layer, and MCP servers remain pure executors. Authentication is JWT-based with Google OAuth, and all user secrets are encrypted. The architecture mirrors how AI tooling should be built in production.”
+**Returns**
+
+* Array of `{ category, total }` ordered by total DESC
 
 ---
 
-## 🚀 Future Improvements
+### 4️⃣ monthly_report
 
-* Redis-based rate limiting
-* Audit logs per tool call
-* Webhook-based async execution
-* OpenAPI spec generation
-* CI/CD pipeline
+Generates a monthly summary.
 
----
+**Arguments**
 
-## 📜 License
+* user_id
+* month (YYYY-MM)
 
-MIT
+**Returns**
 
----
-
-**Built with ❤️ as a serious architecture demonstration, not a toy project.**
+* total_spending
+* expense_count
+* category_breakdown
+* natural-language summary
 
 ---
 
-# 📊 Visual Diagrams (Mermaid)
-
-## System Architecture
-
-```mermaid
-flowchart LR
-    U[User]
-    CE[Chrome Extension]
-    BO[Backend Orchestrator]
-    LLM[LLM]
-    MCP[Expense MCP Server]
-    DB[(Postgres)]
-
-    U --> CE
-    CE -->|JWT| BO
-    BO --> LLM
-    BO --> MCP
-    MCP --> DB
-```
-
-## Authentication Flow (JWT)
+## 🧠 Intent → Execution Flow
 
 ```mermaid
 sequenceDiagram
     participant U as User
     participant CE as Chrome Extension
-    participant G as Google OAuth
-    participant BO as Backend
-
-    U->>CE: Click Sign-In
-    CE->>G: Request ID Token
-    G-->>CE: ID Token
-    CE->>BO: POST /auth/google
-    BO-->>CE: Signed JWT
-```
-
-## Intent → Execution Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant CE as Extension
     participant BO as Backend
     participant LLM as LLM
     participant MCP as MCP Server
@@ -408,36 +308,37 @@ sequenceDiagram
     U->>CE: Natural language input
     CE->>BO: POST /llm/intent
     BO->>LLM: Translate intent
-    LLM-->>BO: Tool + Arguments
+    LLM-->>BO: { tool, arguments }
     BO-->>CE: Confirmation payload
-    U->>CE: Confirm
+    U->>CE: Explicit confirm
     CE->>BO: POST /execute
     BO->>MCP: Execute tool (user_id)
 ```
 
 ---
 
-# 📄 Short README (Recruiter-Friendly)
+## 📊 Why This Is Resume-Grade
 
-## Floating AI Expense Assistant
-
-A Chrome Extension + AI backend that allows users to manage expenses using natural language — safely, transparently, and with full user control.
-
-### Highlights
-
-* Human-in-the-loop AI (no auto-execution)
+* Correct MCP architecture
+* Human-in-the-loop AI
+* Deterministic tool execution
 * JWT-based Google authentication
-* MCP-compliant backend orchestration
-* Encrypted BYOK support
+* Secure BYOK handling
 * Chrome Extension (MV3)
-
-### Tech Stack
-
-* Frontend: React, Chrome Extensions MV3
-* Backend: Node.js, JWT, Supabase
-* AI: Gemini / OpenAI (BYOK)
-* Protocol: MCP (Model Context Protocol)
 
 ---
 
+## 🎓 Interview One-Liner
+
+> “This is a human-in-the-loop AI system where the frontend is intentionally dumb, the backend acts as an AI decision layer, and MCP servers remain pure executors with deterministic behavior.”
+
+---
+
+## 🚀 Future Improvements
+
+* Redis-based rate limiting
+* Per-tool audit logs
+* Async execution via queues
+* OpenAPI generation
+* CI/CD pipeline
 
