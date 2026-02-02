@@ -1,4 +1,4 @@
-````md
+
 # 💰 Floating AI Expense Assistant
 
 **A human-in-the-loop, AI-powered expense management system built using a Chrome Extension + MCP-based Backend Orchestrator**
