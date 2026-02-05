@@ -1,13 +1,4 @@
-/**
- * Confirmation Component
- * 
- * Shows action details and requires user confirmation before execution
- * 
- * CRITICAL SAFETY RULE:
- * - NEVER auto-execute actions
- * - Always show what will be executed
- * - Clear confirmation required
- */
+
 
 import React, { useState } from 'react';
 import { llmAPI } from './api.js';

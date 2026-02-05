@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Expense Manager - AI Assistant",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AI-powered expense tracking with natural language. Manage your expenses effortlessly.",
   
   "icons": {
@@ -14,9 +14,15 @@
     "storage",
     "identity"
   ],
+
+  "oauth2": {
+    "client_id": "411523715379-irras3nean8r3isf8nvcnngd77ab2jod.apps.googleusercontent.com",
+    "scopes": ["openid", "email", "profile"]
+  },
+  
   
   "host_permissions": [
-    "http://localhost/7895",
+    "http://localhost:3000/*",
     "https://expense-manager-61j9.onrender.com/*",
     "https://accounts.google.com/*",
     "https://oauth2.googleapis.com/*"

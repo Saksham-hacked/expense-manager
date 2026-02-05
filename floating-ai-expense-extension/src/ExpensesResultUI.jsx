@@ -47,14 +47,7 @@ function resolvePayload(tool, result) {
 
 
 
-  // if (!result || !result.result.structuredContent.result) {
-  //   return (
-  //     <p className="text-sm text-neutral-400">
-  //       No data returned
-  //       {tool && ": " + result}
-  //     </p>
-  //   );
-  // }
+
 
  const payload = resolvePayload(tool, result);
 

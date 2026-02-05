@@ -8,6 +8,8 @@
  * - No longer relies on manifest's oauth2 block
  */
 
+
+
 const API_BASE_URL = "https://expense-manager-61j9.onrender.com";
 
 // OAuth Configuration
@@ -18,6 +20,20 @@ const OAUTH_CONFIG = {
   tokenUrl: "https://oauth2.googleapis.com/token",
   scope: "openid email profile"
 };
+
+
+console.log('[Extension] Background service worker started');
+console.log('[Extension] Extension ID:', chrome.runtime.id);
+console.log('[Extension] API Base URL:', API_BASE_URL);
+console.log('[Extension] OAuth Redirect URI:', OAUTH_CONFIG.redirectUri);
+
+// Update the redirect URI dynamically
+OAUTH_CONFIG.redirectUri = `https://${chrome.runtime.id}.chromiumapp.org/`;
+
+console.log('[Extension] Updated redirect URI to:', OAUTH_CONFIG.redirectUri);
+
+
+
 
 /**
  * Helper: get JWT

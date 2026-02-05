@@ -1,105 +1,13 @@
-/**
- * Authentication Component
- * 
- * Handles Google Sign-In using Chrome Identity API
- */
+
 
 import React, { useState } from 'react';
-// import { authAPI } from './api.js';
+
 
 export default function Auth({ onAuthSuccess }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // const handleGoogleSignIn = async () => {
-  //   setIsLoading(true);
-  //   setError(null);
 
-  //   try {
-  //     // Get Google ID token using Chrome Identity API
-  //     const token = await new Promise((resolve, reject) => {
-  //       console.log(chrome);
-  //       chrome.identity.getAuthToken({ interactive: true }, (token) => {
-  //         if (chrome.runtime.lastError) {
-  //           reject(chrome.runtime.lastError);
-  //         } else {
-  //           resolve(token);
-  //         }
-  //       });
-  //     });
-
-  //     // Send token to backend
-  //     const userData = await authAPI.googleSignIn(token);
-      
-  //     // Notify parent component
-  //     onAuthSuccess(userData);
-  //   } catch (err) {
-  //     console.error('Sign-in error:', err);
-  //     setError(err.message || 'Failed to sign in. Please try again.');
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-// const handleGoogleSignIn = async () => {
-//   setIsLoading(true);
-//   setError(null);
-
-//   try {
-//     const response = await new Promise((resolve, reject) => {
-//       chrome.runtime.sendMessage(
-//         { type: "GOOGLE_SIGN_IN" },
-//         res => {
-//           if (chrome.runtime.lastError) {
-//             reject(chrome.runtime.lastError);
-//           } else if (res?.error) {
-//             reject(new Error(res.error));
-//           } else {
-//             resolve(res);
-//           }
-//         }
-//       );
-//     });
-
-//     // const userData = await authAPI.googleSignIn(response.idToken);
-//     onAuthSuccess(userData);
-
-//   } catch (err) {
-//     setError(err.message || "Sign-in failed");
-//   } finally {
-//     setIsLoading(false);
-//   }
-// };
-
-// const handleGoogleSignIn = async () => {
-//   setIsLoading(true);
-//   setError(null);
-
-//   chrome.runtime.sendMessage(
-//     { type: "GOOGLE_SIGN_IN" },
-//     async (response) => {
-//       setIsLoading(false);
-
-//       if (chrome.runtime.lastError) {
-//         setError(chrome.runtime.lastError.message);
-//         return;
-//       }
-
-//       if (response?.error) {
-//         setError(response.error);
-//         return;
-//       }
-
-//       // ✅ Save session locally
-//       await chrome.storage.local.set({
-//         sessionToken: response.sessionToken,
-//         user: response.user,
-//       });
-
-//       // ✅ Notify parent
-//       onAuthSuccess(response);
-//     }
-//   );
-// };
 const handleGoogleSignIn = async () => {
   setIsLoading(true);
   setError(null);

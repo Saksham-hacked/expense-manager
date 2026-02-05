@@ -63,12 +63,14 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://local
 app.use(
   cors({
     origin: (origin, callback) => {
+      console.log('[CORS] Request from origin:', origin);
+
       // 1. Allow requests with no origin (Chrome extension, Postman, curl)
       if (!origin) {
         return callback(null, true);
       }
 
-      // 2. Allow Chrome extensions
+      // 2. Allow ALL Chrome extensions (important for Web Store reviewers)
       if (origin.startsWith("chrome-extension://")) {
         return callback(null, true);
       }
@@ -78,8 +80,15 @@ app.use(
         return callback(null, true);
       }
 
-      // 4. For everything else → DISALLOW WITHOUT ERROR
-      return callback(null, false);
+      // 4. Allow your production domains
+      const allowedDomains = (process.env.ALLOWED_ORIGINS || '').split(',');
+      if (allowedDomains.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // 5. For everything else → Log but allow (for debugging)
+      console.log('[CORS] Unknown origin allowed:', origin);
+      return callback(null, true); // Change to false after debugging
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],

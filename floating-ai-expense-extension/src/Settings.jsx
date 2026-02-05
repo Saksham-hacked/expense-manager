@@ -1,8 +1,4 @@
-/**
- * Settings Component
- * 
- * Handles user settings including BYOK (Bring Your Own Key)
- */
+
 
 import React, { useState, useEffect } from 'react';
 import { settingsAPI, authAPI } from './api.js';
