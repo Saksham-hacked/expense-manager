@@ -43,8 +43,7 @@ function getCurrentMonthISO() {
   return new Date().toISOString().slice(0, 7); // YYYY-MM
 }
 
-const todayISO = getTodayISO();
-const currentMonthISO = getCurrentMonthISO();
+// dates are computed per-request inside parseIntent — not here
 
 
 
@@ -197,10 +196,8 @@ Respond ONLY with the JSON object.
 If the output is not valid JSON, you have failed.
 `;
 
-const SYSTEM_PROMPT = FINAL_PROMPT_TEMPLATE
-  .replace("{{TODAY}}", todayISO)
-  .replace("{{CURRENT_MONTH}}", currentMonthISO)
-  .replace("{{TOOL_SCHEMAS_JSON}}", JSON.stringify(TOOL_SCHEMAS, null, 2));
+// tool schemas are static — only date placeholders are filled per-request
+const SYSTEM_PROMPT_TEMPLATE = FINAL_PROMPT_TEMPLATE.replace("{{TOOL_SCHEMAS_JSON}}", JSON.stringify(TOOL_SCHEMAS, null, 2));
 
 /**
  * Get LLM API key for user (BYOK or default)
@@ -230,7 +227,6 @@ async function getLLMApiKey(userId) {
     throw new Error('No LLM API key available (user BYOK not set, default not configured)');
   }
   console.log("Using default LLM API key for provider:", defaultProvider);
-  console.log("Default API Key:", defaultKey);
   
   return {
     provider: defaultProvider,
@@ -241,7 +237,7 @@ async function getLLMApiKey(userId) {
 /**
  * Call Gemini API
  */
-async function callGemini(apiKey, userMessage) {
+async function callGemini(apiKey, userMessage, systemPrompt) {
   const url =
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=" +
     apiKey;
@@ -252,7 +248,7 @@ async function callGemini(apiKey, userMessage) {
     contents: [
       {
         role: "user",
-        parts: [{ text: SYSTEM_PROMPT }],
+        parts: [{ text: systemPrompt }],
       },
       {
         role: "user",
@@ -279,7 +275,7 @@ async function callGemini(apiKey, userMessage) {
 /**
  * Call OpenAI API
  */
-async function callOpenAI(apiKey, userMessage) {
+async function callOpenAI(apiKey, userMessage, systemPrompt) {
   const url = 'https://api.openai.com/v1/chat/completions';
   
   const response = await axios.post(
@@ -287,7 +283,7 @@ async function callOpenAI(apiKey, userMessage) {
     {
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage },
       ],
       temperature: 0.1,
@@ -317,17 +313,22 @@ export async function parseIntent(userId, userMessage) {
   }
   console.log("in parseintent function with userId:", userId);
   try {
+    const todayISO = getTodayISO();
+    const currentMonthISO = getCurrentMonthISO();
+    const systemPrompt = SYSTEM_PROMPT_TEMPLATE
+      .replace("{{TODAY}}", todayISO)
+      .replace("{{CURRENT_MONTH}}", currentMonthISO);
+
     // Get API key (user's or default)
     const { provider, apiKey } = await getLLMApiKey(userId);
     console.log("Using LLM provider:", provider);
-    console.log("Using LLM API key:", apiKey);
     
     // Call appropriate LLM
     let llmResponse;
     if (provider === 'gemini') {
-      llmResponse = await callGemini(apiKey, userMessage);
+      llmResponse = await callGemini(apiKey, userMessage, systemPrompt);
     } else if (provider === 'openai') {
-      llmResponse = await callOpenAI(apiKey, userMessage);
+      llmResponse = await callOpenAI(apiKey, userMessage, systemPrompt);
     } else {
       throw new Error(`Unknown LLM provider: ${provider}`);
     }
