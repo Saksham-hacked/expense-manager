@@ -239,7 +239,7 @@ async function getLLMApiKey(userId) {
  */
 async function callGemini(apiKey, userMessage, systemPrompt) {
   const url =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=" +
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" +
     apiKey;
   
   console.log("Gemini API URL:", url);
